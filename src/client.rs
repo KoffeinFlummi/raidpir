@@ -84,13 +84,20 @@ impl RaidPirClient {
             // of the size of usize, this would have to be changed.
             let query_slice = query.as_raw_slice_mut();
 
-            // TODO: multithreading, SIMD
-            for (j, r) in random_bits.as_raw_slice().iter().enumerate() {
-                // index of first non-flip chunk of query for this server,
-                // divided by BitVec element size.
-                let first_index = (i+1) * blocks_per_server / (std::mem::size_of::<&usize>() * 8);
-                query_slice[(first_index + j) % query_slice.len()] ^= r;
-            }
+            // Rotate left one chunk so we start at blocks_per_server * (i+1).
+            // This way we can simply use iter for performing the XORing, which
+            // makes using SIMD and parallelizing later easier. By the time
+            // we're done with the loop, the query is back where it started.
+            //
+            // Counterintuitively, this is actually faster (even without SIMD
+            // and multithreading) than a for loop with index % len.
+            query_slice.rotate_left(blocks_per_server / (std::mem::size_of::<&usize>() * 8));
+
+            // TODO: multithreading, SIMD?
+            query_slice
+                .iter_mut()
+                .zip(random_bits.as_raw_slice().iter())
+                .for_each(|(q, r)| *q ^= r);
         }
 
         // split query into server chunks
