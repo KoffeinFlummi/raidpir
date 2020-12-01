@@ -14,7 +14,7 @@ pub struct RaidPirData<N: ArrayLength<u8>> {
 
 impl<N: ArrayLength<u8>> RaidPirData<N> {
     /**
-     * Construct a new object, cloning the given slic.
+     * Construct a new object, cloning the given slice.
      */
     pub fn from_slice(slice: &[u8]) -> Self {
         Self {
