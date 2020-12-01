@@ -111,7 +111,7 @@ impl RaidPirClient {
     /**
      * Combine responses from servers to calculate queried element.
      */
-    pub fn combine<T: Sized + Default + BitXorAssign>(&self, responses: Vec<T>) -> T {
+    pub fn combine<T: Default + BitXorAssign>(&self, responses: Vec<T>) -> T {
         assert!(responses.len() == self.servers);
 
         let mut data = T::default();
