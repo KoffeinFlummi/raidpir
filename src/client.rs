@@ -12,7 +12,7 @@ pub struct RaidPirClient {
     blocks: usize,
     blocks_padded: usize,
     servers: usize,
-    redundancy: usize
+    redundancy: usize,
 }
 
 impl RaidPirClient {
@@ -25,11 +25,7 @@ impl RaidPirClient {
      * let client = RaidPirClient::new(12, 4, 3);
      * ```
      */
-    pub fn new(
-        blocks: usize,
-        servers: usize,
-        redundancy: usize,
-    ) -> Self {
+    pub fn new(blocks: usize, servers: usize, redundancy: usize) -> Self {
         // TODO: move to param type?
 
         // blocks per server has to be a multiple of the size of usize to make

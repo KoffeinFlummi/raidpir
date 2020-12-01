@@ -9,7 +9,7 @@ use generic_array::{ArrayLength, GenericArray};
  */
 #[derive(Clone, Default)]
 pub struct RaidPirData<N: ArrayLength<u8>> {
-    data: GenericArray<u8, N>
+    data: GenericArray<u8, N>,
 }
 
 impl<N: ArrayLength<u8>> RaidPirData<N> {
@@ -18,7 +18,7 @@ impl<N: ArrayLength<u8>> RaidPirData<N> {
      */
     pub fn from_slice(slice: &[u8]) -> Self {
         Self {
-            data: GenericArray::clone_from_slice(slice)
+            data: GenericArray::clone_from_slice(slice),
         }
     }
 

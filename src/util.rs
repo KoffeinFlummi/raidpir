@@ -1,8 +1,8 @@
 //! Utility functions
 
-use rand::rngs::StdRng; // TODO: different PRNGs?
-use rand::{SeedableRng, RngCore};
 use bitvec::prelude::*;
+use rand::rngs::StdRng; // TODO: different PRNGs?
+use rand::{RngCore, SeedableRng};
 
 /**
  * Generate a BitVec of random data with the given size and seed.

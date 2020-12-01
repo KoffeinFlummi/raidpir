@@ -1,5 +1,5 @@
 use rand::rngs::StdRng; // TODO: different PRNGs?
-use rand::{SeedableRng, RngCore};
+use rand::{RngCore, SeedableRng};
 
 use raidpir::client::RaidPirClient;
 use raidpir::server::RaidPirServer;

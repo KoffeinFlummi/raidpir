@@ -4,7 +4,7 @@ extern crate test;
 use test::Bencher;
 
 use rand::rngs::StdRng;
-use rand::{SeedableRng, RngCore};
+use rand::{RngCore, SeedableRng};
 
 use raidpir::client::RaidPirClient;
 use raidpir::server::RaidPirServer;

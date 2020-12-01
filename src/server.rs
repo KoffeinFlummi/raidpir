@@ -3,9 +3,9 @@
 use std::collections::HashMap;
 use std::ops::BitXorAssign;
 
-use rand::rngs::StdRng; // TODO: different PRNGs?
-use rand::{SeedableRng, RngCore};
 use bitvec::prelude::*;
+use rand::rngs::StdRng; // TODO: different PRNGs?
+use rand::{RngCore, SeedableRng};
 
 use crate::util::*;
 
@@ -34,17 +34,15 @@ impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
     /**
      * Create a new server object and prepare the database.
      */
-    pub fn new(
-        mut db: Vec<T>,
-        id: usize,
-        servers: usize,
-        redundancy: usize
-    ) -> Self {
+    pub fn new(mut db: Vec<T>, id: usize, servers: usize, redundancy: usize) -> Self {
         // TODO: move to param type?, store unpadded size
 
         // pad databse to next multiple of (servers * 64)
         if db.len() % (servers * 64) != 0 {
-            db.resize_with(db.len() + (servers * 64) - (db.len() % (servers * 64)), Default::default)
+            db.resize_with(
+                db.len() + (servers * 64) - (db.len() % (servers * 64)),
+                Default::default,
+            )
         }
 
         assert!(db.len() % (servers * 64) == 0);
@@ -100,7 +98,8 @@ impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
 
         let seed = *self.queue.keys().next().unwrap();
 
-        self.queue_used.insert(seed, self.queue.remove(&seed).unwrap());
+        self.queue_used
+            .insert(seed, self.queue.remove(&seed).unwrap());
 
         seed
     }
