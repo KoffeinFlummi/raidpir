@@ -17,8 +17,9 @@ const QUEUE_SIZE: usize = 32;
  * T is the type of database elements, and needs to be bit-xor-assignable
  * and have a default value, i.e. integer types.
  *
- * When not using integer values, e.g. BitVecs for larger data, care needs
- * to be taken to ensure that all values have the same size.
+ * When not using integer values, care needs to be taken to ensure that all
+ * values have the same size, and that T::default() returns an object of
+ * that size. See [crate::types::RaidPirData].
  */
 #[derive(Debug)]
 pub struct RaidPirServer<T> {
@@ -76,10 +77,6 @@ impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
 
             let mut preprocessed = T::default();
             for (i, r) in random_bits.iter().enumerate() {
-                if i >= self.db.len() - blocks_per_server {
-                    break;
-                }
-
                 if !r {
                     continue;
                 }
