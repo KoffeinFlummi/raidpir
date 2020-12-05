@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use std::ops::BitXorAssign;
+use std::sync::RwLock;
 
 use bitvec::prelude::*;
 use rand::rngs::StdRng; // TODO: different PRNGs?
@@ -26,8 +27,8 @@ pub struct RaidPirServer<T> {
     db: Vec<T>,
     servers: usize,
     redundancy: usize,
-    queue: HashMap<u64, T>,
-    queue_used: HashMap<u64, T>,
+    queue: RwLock<HashMap<u64, T>>,
+    queue_used: RwLock<HashMap<u64, T>>,
 }
 
 impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
@@ -55,20 +56,20 @@ impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
             db,
             servers,
             redundancy,
-            queue: HashMap::with_capacity(QUEUE_SIZE),
-            queue_used: HashMap::new(),
+            queue: RwLock::new(HashMap::with_capacity(QUEUE_SIZE)),
+            queue_used: RwLock::new(HashMap::new()),
         }
     }
 
     /**
      * Preprocess queries by preparing a queue of seeds and partial answers.
      */
-    pub fn preprocess(&mut self) {
+    pub fn preprocess(&self) {
         let blocks_per_server = self.db.len() / self.servers;
 
         let mut rng = StdRng::from_entropy();
 
-        while self.queue.len() < QUEUE_SIZE {
+        loop {
             let seed = rng.next_u64();
 
             let random_bits = rand_bitvec(seed, blocks_per_server * (self.redundancy - 1));
@@ -82,24 +83,35 @@ impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
                 preprocessed ^= self.db[blocks_per_server + i].clone();
             }
 
-            self.queue.insert(seed, preprocessed);
+            let mut queue = self.queue.write().unwrap();
+            queue.insert(seed, preprocessed);
+            if queue.len() >= QUEUE_SIZE {
+                break;
+            }
         }
     }
 
     /**
      * Return a seed from the queue.
      */
-    pub fn seed(&mut self) -> u64 {
+    pub fn seed(&self) -> u64 {
         // TODO: mutex?
 
-        if self.queue.len() == 0 {
+        let len = {
+            let queue = self.queue.read().unwrap();
+            queue.len()
+        };
+
+        if len == 0 {
             self.preprocess();
         }
 
-        let seed = *self.queue.keys().next().unwrap();
+        let mut queue = self.queue.write().unwrap();
+        let mut queue_used = self.queue_used.write().unwrap();
 
-        self.queue_used
-            .insert(seed, self.queue.remove(&seed).unwrap());
+        let seed = *queue.keys().next().unwrap();
+
+        queue_used.insert(seed, queue.remove(&seed).unwrap());
 
         seed
     }
@@ -107,8 +119,11 @@ impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
     /**
      * Calculate response to the given query with the given seed.
      */
-    pub fn response(&mut self, seed: u64, query: &BitVec) -> T {
-        let mut answer = self.queue_used.remove(&seed).unwrap(); // TODO
+    pub fn response(&self, seed: u64, query: &BitVec) -> T {
+        let mut answer = {
+            let mut queue_used = self.queue_used.write().unwrap();
+            queue_used.remove(&seed).unwrap()
+        };
 
         for (i, q) in query.iter().enumerate() {
             if !q {
