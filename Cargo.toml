@@ -11,5 +11,9 @@ rand_chacha = "0.2"
 generic-array = "0.14"
 rayon = "1.5"
 
+[dev-dependencies]
+criterion = "0.3"
+
 [[bench]]
 name = "pir"
+harness = false
