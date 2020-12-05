@@ -1,7 +1,7 @@
 //! Utility functions
 
 use bitvec::prelude::*;
-use rand::rngs::StdRng; // TODO: different PRNGs?
+use rand_chacha::ChaChaRng;
 use rand::{RngCore, SeedableRng};
 
 /**
@@ -20,8 +20,8 @@ use rand::{RngCore, SeedableRng};
  * ```
  */
 pub fn rand_bitvec(seed: u64, len: usize) -> BitVec {
-    // TODO: seed type?
-    let mut prng = StdRng::seed_from_u64(seed);
+    // Using ChaCha20, to be reproducible on different architectures.
+    let mut prng = ChaChaRng::seed_from_u64(seed);
 
     // BitVec, by default, works with the platform's usize type. Size depends on
     // the platform, and since RngCore doesn't provide a method for returning
