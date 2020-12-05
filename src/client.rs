@@ -3,6 +3,7 @@
 use std::ops::BitXorAssign;
 
 use bitvec::prelude::*;
+use rayon::prelude::*;
 
 use crate::util::*;
 
@@ -38,7 +39,7 @@ impl RaidPirClient {
         };
 
         assert!(blocks_padded % servers == 0);
-        assert!((blocks_padded / servers) % std::mem::size_of::<&usize>() == 0);
+        assert!((blocks_padded / servers) % (std::mem::size_of::<&usize>() * 8) == 0);
         assert!(redundancy >= 2 && redundancy <= servers);
 
         Self {
@@ -72,14 +73,17 @@ impl RaidPirClient {
 
         let blocks_per_server = self.blocks_padded / self.servers;
 
-        for i in 0..self.servers {
-            let random_bits = rand_bitvec(seeds[i], blocks_per_server * (self.redundancy - 1));
+        let random_bits: Vec<BitVec<Lsb0>> = seeds
+            .par_iter()
+            .map(|s| rand_bitvec(*s, blocks_per_server * (self.redundancy - 1)))
+            .collect();
 
-            // BitSlice's as_raw_slice methods only cover the completely covered
-            // elements, so if in the future blocks_per_server is not a multiple
-            // of the size of usize, this would have to be changed.
-            let query_slice = query.as_raw_slice_mut();
+        // BitSlice's as_raw_slice methods only cover the completely covered
+        // elements, so if in the future blocks_per_server is not a multiple
+        // of the size of usize, this would have to be changed.
+        let mut query_slice = query.as_raw_slice_mut();
 
+        for random in random_bits.iter() {
             // Rotate left one chunk so we start at blocks_per_server * (i+1).
             // This way we can simply use iter for performing the XORing, which
             // makes using SIMD and parallelizing later easier. By the time

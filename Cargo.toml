@@ -9,6 +9,7 @@ bitvec = "0.19"
 rand = "0.7"
 rand_chacha = "0.2"
 generic-array = "0.14"
+rayon = "1.5"
 
 [[bench]]
 name = "pir"
