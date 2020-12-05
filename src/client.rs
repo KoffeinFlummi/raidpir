@@ -93,11 +93,7 @@ impl RaidPirClient {
             // and multithreading) than a for loop with index % len.
             query_slice.rotate_left(blocks_per_server / (std::mem::size_of::<&usize>() * 8));
 
-            // TODO: multithreading, SIMD?
-            query_slice
-                .iter_mut()
-                .zip(random_bits.as_raw_slice().iter())
-                .for_each(|(q, r)| *q ^= r);
+            xor_into_slice(&mut query_slice, random.as_raw_slice());
         }
 
         // split query into server chunks

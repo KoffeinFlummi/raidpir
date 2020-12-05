@@ -3,6 +3,7 @@
 use bitvec::prelude::*;
 use rand_chacha::ChaChaRng;
 use rand::{RngCore, SeedableRng};
+use rayon::prelude::*;
 
 /**
  * Generate a BitVec of random data with the given size and seed.
@@ -55,4 +56,19 @@ pub fn rand_bitvec(seed: u64, len: usize) -> BitVec {
     bv.resize(len, false);
 
     bv
+}
+
+/**
+ * Xor b_slice into a_slice, using rayon for parallelization.
+ *
+ * Only a separate function for testing purposes.
+ */
+pub fn xor_into_slice(a_slice: &mut [usize], b_slice: &[usize]) {
+    // When compiled with RUSTFLAGS="-C target-feature=+avx2",
+    // this will make use of AVX2.
+    a_slice
+        .par_iter_mut()
+        .zip(b_slice.par_iter())
+        .with_min_len(1 << 16)
+        .for_each(|(a, b)| *a ^= b);
 }
