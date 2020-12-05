@@ -93,19 +93,17 @@ fn test_padding() {
 
 #[test]
 fn test_bytes() {
-    use generic_array::typenum::U8;
-
     let mut prng = StdRng::from_entropy();
 
-    let mut db: Vec<RaidPirData<U8>> = Vec::with_capacity(256);
+    let mut db: Vec<RaidPirData> = Vec::with_capacity(256);
     for _i in 0..256 {
         let mut buffer = vec![0; 8];
         prng.fill_bytes(&mut buffer);
-        db.push(RaidPirData::from_slice(&buffer));
+        db.push(RaidPirData::new(buffer));
     }
-    db[42] = RaidPirData::from_slice(b"deadbeef");
+    db[42] = RaidPirData::new(b"deadbeef".to_vec());
 
-    let mut servers: Vec<RaidPirServer<RaidPirData<U8>>> = (0..4)
+    let mut servers: Vec<RaidPirServer<RaidPirData>> = (0..4)
         .map(|i| RaidPirServer::new(db.clone(), i, 4, 2))
         .collect();
 
@@ -115,7 +113,7 @@ fn test_bytes() {
 
     let queries = client.query(42, &seeds);
 
-    let responses: Vec<RaidPirData<U8>> = servers
+    let responses: Vec<RaidPirData> = servers
         .iter_mut()
         .zip(seeds.iter().zip(queries.iter()))
         .map(|(server, (seed, query))| server.response(seed.clone(), query))
