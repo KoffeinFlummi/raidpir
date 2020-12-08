@@ -31,7 +31,7 @@ pub struct RaidPirServer<T> {
     queue_used: RwLock<HashMap<u64, T>>,
 }
 
-impl<T: Clone + Default + BitXor<Output=T>> RaidPirServer<T> {
+impl<T: Clone + Default + BitXor<Output = T>> RaidPirServer<T> {
     /**
      * Create a new server object and prepare the database.
      */
@@ -79,9 +79,11 @@ impl<T: Clone + Default + BitXor<Output=T>> RaidPirServer<T> {
                 db_iter.next().unwrap();
             }
 
-            let preprocessed = random_bits.iter().zip(db_iter)
-                .filter(|(q,_)| **q)
-                .fold(T::default(), |a,(_,b)| a ^ b.clone());
+            let preprocessed = random_bits
+                .iter()
+                .zip(db_iter)
+                .filter(|(q, _)| **q)
+                .fold(T::default(), |a, (_, b)| a ^ b.clone());
 
             let mut queue = self.queue.write().unwrap();
             queue.insert(seed, preprocessed);
@@ -123,8 +125,11 @@ impl<T: Clone + Default + BitXor<Output=T>> RaidPirServer<T> {
             queue_used.remove(&seed).unwrap()
         };
 
-        answer ^ query.iter().zip(self.db.iter())
-            .filter(|(q,_)| **q)
-            .fold(T::default(), |a,(_,b)| a ^ b.clone())
+        answer
+            ^ query
+                .iter()
+                .zip(self.db.iter())
+                .filter(|(q, _)| **q)
+                .fold(T::default(), |a, (_, b)| a ^ b.clone())
     }
 }

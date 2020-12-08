@@ -1,8 +1,8 @@
 //! Utility functions
 
 use bitvec::prelude::*;
-use rand_chacha::ChaChaRng;
 use rand::{RngCore, SeedableRng};
+use rand_chacha::ChaChaRng;
 use rayon::prelude::*;
 
 /**
