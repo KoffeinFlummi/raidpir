@@ -1,7 +1,7 @@
 //! Methods for preprocessing and responding to RAID-PIR queries.
 
 use std::collections::HashMap;
-use std::ops::BitXorAssign;
+use std::ops::BitXor;
 use std::sync::RwLock;
 
 use bitvec::prelude::*;
@@ -31,7 +31,7 @@ pub struct RaidPirServer<T> {
     queue_used: RwLock<HashMap<u64, T>>,
 }
 
-impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
+impl<T: Clone + Default + BitXor<Output=T>> RaidPirServer<T> {
     /**
      * Create a new server object and prepare the database.
      */
@@ -71,17 +71,17 @@ impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
 
         loop {
             let seed = rng.next_u64();
-
             let random_bits = rand_bitvec(seed, blocks_per_server * (self.redundancy - 1));
 
-            let mut preprocessed = T::default();
-            for (i, r) in random_bits.iter().enumerate() {
-                if !r {
-                    continue;
-                }
-
-                preprocessed ^= self.db[blocks_per_server + i].clone();
+            let mut db_iter = self.db.iter();
+            // TODO: replace with advance_by once that is stable
+            for _i in 0..blocks_per_server {
+                db_iter.next().unwrap();
             }
+
+            let preprocessed = random_bits.iter().zip(db_iter)
+                .filter(|(q,_)| **q)
+                .fold(T::default(), |a,(_,b)| a ^ b.clone());
 
             let mut queue = self.queue.write().unwrap();
             queue.insert(seed, preprocessed);
@@ -95,8 +95,6 @@ impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
      * Return a seed from the queue.
      */
     pub fn seed(&self) -> u64 {
-        // TODO: mutex?
-
         let len = {
             let queue = self.queue.read().unwrap();
             queue.len()
@@ -120,19 +118,13 @@ impl<T: Clone + Default + BitXorAssign> RaidPirServer<T> {
      * Calculate response to the given query with the given seed.
      */
     pub fn response(&self, seed: u64, query: &BitVec) -> T {
-        let mut answer = {
+        let answer = {
             let mut queue_used = self.queue_used.write().unwrap();
             queue_used.remove(&seed).unwrap()
         };
 
-        for (i, q) in query.iter().enumerate() {
-            if !q {
-                continue;
-            }
-
-            answer ^= self.db[i].clone();
-        }
-
-        answer
+        answer ^ query.iter().zip(self.db.iter())
+            .filter(|(q,_)| **q)
+            .fold(T::default(), |a,(_,b)| a ^ b.clone())
     }
 }

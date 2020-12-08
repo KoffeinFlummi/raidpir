@@ -1,13 +1,14 @@
 //! Associated RAID-PIR types
 
-use std::ops::BitXorAssign;
+use std::ops::{BitXor, BitXorAssign};
 
 /**
  * Type for arbitrarily-sized byte arrays used as RAID-PIR database elements.
  */
 #[derive(Clone, Default)]
 pub struct RaidPirData {
-    data: Vec<u8>,
+    /// Underlying data
+    pub data: Vec<u8>,
 }
 
 impl RaidPirData {
@@ -32,17 +33,35 @@ impl std::fmt::Debug for RaidPirData {
     }
 }
 
-impl BitXorAssign for RaidPirData {
-    fn bitxor_assign(&mut self, rhs: Self) {
-        let rhs_iter = rhs.into_iter();
+impl BitXor for RaidPirData {
+    type Output = Self;
+
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        let mut new = self.clone();
 
         // This makes sure that items created with default() are not empty
         // after being XORed into.
-        if self.data.len() < rhs_iter.size_hint().0 {
-            self.data.resize(rhs_iter.size_hint().0, 0);
+        if new.data.len() < rhs.data.len() {
+            new.data.resize(rhs.data.len(), 0);
         }
 
-        for (a, b) in self.data.iter_mut().zip(rhs_iter) {
+        for (a, b) in new.data.iter_mut().zip(rhs.into_iter()) {
+            *a ^= b;
+        }
+
+        new
+    }
+}
+
+impl BitXorAssign for RaidPirData {
+    fn bitxor_assign(&mut self, rhs: Self) {
+        // This makes sure that items created with default() are not empty
+        // after being XORed into.
+        if self.data.len() < rhs.data.len() {
+            self.data.resize(rhs.data.len(), 0);
+        }
+
+        for (a, b) in self.data.iter_mut().zip(rhs.into_iter()) {
             *a ^= b;
         }
     }

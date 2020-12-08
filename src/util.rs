@@ -40,8 +40,6 @@ pub fn rand_bitvec(seed: u64, len: usize) -> BitVec {
 
     let mut buffer: Vec<usize> = Vec::with_capacity(buffersize);
 
-    // TODO: multithreading?
-
     for _i in 0..buffersize {
         if cfg!(target_pointer_width = "32") {
             buffer.push(prng.next_u32() as usize);
