@@ -62,8 +62,11 @@ pub fn rand_bitvec(seed: u64, len: usize) -> BitVec {
  * Only a separate function for testing purposes.
  */
 pub fn xor_into_slice(a_slice: &mut [usize], b_slice: &[usize]) {
-    // When compiled with RUSTFLAGS="-C target-feature=+avx2",
-    // this will make use of AVX2.
+    // When compiled with RUSTFLAGS="-C target-feature=+avx2", this will make
+    // use of AVX2 on x86-64.
+    //
+    // For aarch64-linux-android, this should make use of NEON without any
+    // further flags.
     a_slice
         .par_iter_mut()
         .zip(b_slice.par_iter())
