@@ -26,6 +26,7 @@ const QUEUE_SIZE: usize = 32;
 #[derive(Debug)]
 pub struct RaidPirServer<T> {
     db: Vec<T>,
+    russians: Option<Vec<Vec<T>>>,
     servers: usize,
     redundancy: usize,
     queue: RwLock<HashMap<u64, T>>,
@@ -36,7 +37,7 @@ impl<T: Clone + Default + BitXor<Output=T> + BitXorAssign> RaidPirServer<T> {
     /**
      * Create a new server object and prepare the database.
      */
-    pub fn new(mut db: Vec<T>, id: usize, servers: usize, redundancy: usize) -> Self {
+    pub fn new(mut db: Vec<T>, id: usize, servers: usize, redundancy: usize, russians: bool) -> Self {
         // TODO: move to param type?, store unpadded size
 
         // pad databse to next multiple of (servers * 8)
@@ -53,8 +54,19 @@ impl<T: Clone + Default + BitXor<Output=T> + BitXorAssign> RaidPirServer<T> {
         let blocks_per_server = db.len() / servers;
         db.rotate_left(id * blocks_per_server);
 
+        let russians = russians.then(|| db[0..blocks_per_server].chunks(8).map(|chunk| {
+            (0..=255).map(|i| {
+                BitVec::<Lsb0,u8>::from_vec(vec![i])
+                    .iter()
+                    .zip(chunk)
+                    .filter(|(q, _)| **q)
+                    .fold(T::default(), |a, (_, b)| a ^ b.clone())
+            }).collect()
+        }).collect());
+
         Self {
             db,
+            russians,
             servers,
             redundancy,
             queue: RwLock::new(HashMap::with_capacity(QUEUE_SIZE)),
@@ -126,11 +138,21 @@ impl<T: Clone + Default + BitXor<Output=T> + BitXorAssign> RaidPirServer<T> {
             queue_used.remove(&seed).unwrap()
         };
 
-        answer
-            ^ query
+        if let Some(russians) = self.russians.as_ref() {
+            query
+                .as_raw_slice()
+                .iter()
+                .enumerate()
+                .map(|(i, q)| russians[i][*q as usize].clone())
+                .for_each(|x| answer ^= x);
+        } else {
+            query
                 .iter()
                 .zip(self.db.iter())
                 .filter(|(q, _)| **q)
-                .fold(T::default(), |a, (_, b)| a ^ b.clone())
+                .for_each(|(_, x)| answer ^= x.clone());
+        }
+
+        answer
     }
 }
