@@ -16,7 +16,7 @@ fn test_raidpir_redundancies() {
 
     for redundancy in 2..=4 {
         let mut servers: Vec<RaidPirServer<u32>> = (0..4)
-            .map(|i| RaidPirServer::new(db.clone(), i, 4, redundancy))
+            .map(|i| RaidPirServer::new(db.clone(), i, 4, redundancy, true))
             .collect();
 
         let client = RaidPirClient::new(db.len(), 4, redundancy);
@@ -45,7 +45,7 @@ fn test_large_db() {
     }
 
     let mut servers: Vec<RaidPirServer<u32>> = (0..8)
-        .map(|i| RaidPirServer::new(db.clone(), i, 8, 5))
+        .map(|i| RaidPirServer::new(db.clone(), i, 8, 5, false))
         .collect();
 
     let client = RaidPirClient::new(db.len(), 8, 5);
@@ -73,7 +73,7 @@ fn test_padding() {
     }
 
     let mut servers: Vec<RaidPirServer<u32>> = (0..4)
-        .map(|i| RaidPirServer::new(db.clone(), i, 4, 2))
+        .map(|i| RaidPirServer::new(db.clone(), i, 4, 2, true))
         .collect();
 
     let client = RaidPirClient::new(db.len(), 4, 2);
@@ -104,7 +104,7 @@ fn test_bytes() {
     db[42] = RaidPirData::new(b"deadbeef".to_vec());
 
     let mut servers: Vec<RaidPirServer<RaidPirData>> = (0..4)
-        .map(|i| RaidPirServer::new(db.clone(), i, 4, 2))
+        .map(|i| RaidPirServer::new(db.clone(), i, 4, 2, true))
         .collect();
 
     let client = RaidPirClient::new(db.len(), 4, 2);
