@@ -20,37 +20,14 @@ use rayon::prelude::*;
  * assert_eq!(rbv, bitvec![Lsb0, usize; 0, 1, 0, 0, 1]);
  * ```
  */
-pub fn rand_bitvec(seed: u64, len: usize) -> BitVec {
+pub fn rand_bitvec(seed: u64, len: usize) -> BitVec<Lsb0, u8> {
     // Using ChaCha20, to be reproducible on different architectures.
     let mut prng = ChaChaRng::seed_from_u64(seed);
 
-    // BitVec, by default, works with the platform's usize type. Size depends on
-    // the platform, and since RngCore doesn't provide a method for returning
-    // usizes, this is implemented differently for 32 and 64 bit targets.
+    let mut vec = vec![0; len];
+    prng.fill_bytes(&mut vec);
 
-    let buffersize = if cfg!(target_pointer_width = "32") {
-        assert!(std::mem::size_of::<&usize>() == std::mem::size_of::<&u32>());
-        (len / 32) + 1
-    } else if cfg!(target_pointer_width = "64") {
-        assert!(std::mem::size_of::<&usize>() == std::mem::size_of::<&u64>());
-        (len / 64) + 1
-    } else {
-        unreachable!();
-    };
-
-    let mut buffer: Vec<usize> = Vec::with_capacity(buffersize);
-
-    for _i in 0..buffersize {
-        if cfg!(target_pointer_width = "32") {
-            buffer.push(prng.next_u32() as usize);
-        } else if cfg!(target_pointer_width = "64") {
-            buffer.push(prng.next_u64() as usize);
-        } else {
-            unreachable!();
-        }
-    }
-
-    let mut bv = BitVec::from_vec(buffer);
+    let mut bv = BitVec::from_vec(vec);
     bv.resize(len, false);
 
     bv
@@ -61,7 +38,7 @@ pub fn rand_bitvec(seed: u64, len: usize) -> BitVec {
  *
  * Only a separate function for testing purposes.
  */
-pub fn xor_into_slice(a_slice: &mut [usize], b_slice: &[usize]) {
+pub fn xor_into_slice(a_slice: &mut [u8], b_slice: &[u8]) {
     // When compiled with RUSTFLAGS="-C target-feature=+avx2", this will make
     // use of AVX2 on x86-64.
     //

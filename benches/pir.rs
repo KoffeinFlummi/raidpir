@@ -156,12 +156,10 @@ fn bench_xoring(c: &mut Criterion) {
                     threadpool.install(|| {
                         let mut prng = StdRng::from_entropy();
 
-                        let mut a: Vec<usize> = Vec::with_capacity(*size);
-                        for _i in 0..*size {
-                            a.push(prng.next_u64() as usize);
-                        }
+                        let mut a: Vec<u8> = vec![0; *size];
+                        prng.fill_bytes(&mut a);
 
-                        let b: Vec<usize> = vec![42; *size];
+                        let b: Vec<u8> = vec![42; *size];
 
                         bench.iter(|| xor_into_slice(&mut a, &b));
                     });

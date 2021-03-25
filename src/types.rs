@@ -45,9 +45,9 @@ impl BitXor for RaidPirData {
             new.data.resize(rhs.data.len(), 0);
         }
 
-        for (a, b) in new.data.iter_mut().zip(rhs.into_iter()) {
+        new.data.iter_mut().zip(rhs.data.iter()).for_each(|(a, b)| {
             *a ^= b;
-        }
+        });
 
         new
     }
@@ -55,15 +55,9 @@ impl BitXor for RaidPirData {
 
 impl BitXorAssign for RaidPirData {
     fn bitxor_assign(&mut self, rhs: Self) {
-        // This makes sure that items created with default() are not empty
-        // after being XORed into.
-        if self.data.len() < rhs.data.len() {
-            self.data.resize(rhs.data.len(), 0);
-        }
-
-        for (a, b) in self.data.iter_mut().zip(rhs.into_iter()) {
+        self.data.iter_mut().zip(rhs.data.iter()).for_each(|(a,b)| {
             *a ^= b;
-        }
+        });
     }
 }
 

@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use std::ops::BitXor;
+use std::ops::BitXorAssign;
 use std::sync::RwLock;
 
 use bitvec::prelude::*;
@@ -31,22 +32,22 @@ pub struct RaidPirServer<T> {
     queue_used: RwLock<HashMap<u64, T>>,
 }
 
-impl<T: Clone + Default + BitXor<Output = T>> RaidPirServer<T> {
+impl<T: Clone + Default + BitXor<Output=T> + BitXorAssign> RaidPirServer<T> {
     /**
      * Create a new server object and prepare the database.
      */
     pub fn new(mut db: Vec<T>, id: usize, servers: usize, redundancy: usize) -> Self {
         // TODO: move to param type?, store unpadded size
 
-        // pad databse to next multiple of (servers * 64)
-        if db.len() % (servers * 64) != 0 {
+        // pad databse to next multiple of (servers * 8)
+        if db.len() % (servers * 8) != 0 {
             db.resize_with(
-                db.len() + (servers * 64) - (db.len() % (servers * 64)),
+                db.len() + (servers * 8) - (db.len() % (servers * 8)),
                 Default::default,
             )
         }
 
-        assert!(db.len() % (servers * 64) == 0);
+        assert!(db.len() % (servers * 8) == 0);
         assert!(redundancy >= 2 && redundancy <= servers);
 
         let blocks_per_server = db.len() / servers;
@@ -119,8 +120,8 @@ impl<T: Clone + Default + BitXor<Output = T>> RaidPirServer<T> {
     /**
      * Calculate response to the given query with the given seed.
      */
-    pub fn response(&self, seed: u64, query: &BitVec) -> T {
-        let answer = {
+    pub fn response(&self, seed: u64, query: &BitVec<Lsb0, u8>) -> T {
+        let mut answer = {
             let mut queue_used = self.queue_used.write().unwrap();
             queue_used.remove(&seed).unwrap()
         };
