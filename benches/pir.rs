@@ -11,7 +11,7 @@ fn bench_query(c: &mut Criterion) {
     let mut group = c.benchmark_group("Query");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
 
-    for exp in [14, 16, 18, 20, 22].iter() {
+    for exp in [20].iter() {
         let size = 1usize << exp;
 
         for threads in [1, 2, 4].iter() {
@@ -30,7 +30,7 @@ fn bench_query(c: &mut Criterion) {
                         prng.fill_bytes(&mut db);
 
                         let mut servers: Vec<RaidPirServer<u8>> = (0..2)
-                            .map(|i| RaidPirServer::new(db.clone(), i, 2, 2))
+                            .map(|i| RaidPirServer::new(db.clone(), i, 2, 2, true))
                             .collect();
 
                         let client = RaidPirClient::new(db.len(), 2, 2);
@@ -51,7 +51,7 @@ fn bench_response(c: &mut Criterion) {
     let mut group = c.benchmark_group("Response");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
 
-    for exp in [14, 16, 18, 20, 22].iter() {
+    for exp in [20].iter() {
         let size = 1usize << exp;
 
         for threads in [1, 2, 4].iter() {
@@ -70,7 +70,7 @@ fn bench_response(c: &mut Criterion) {
                         prng.fill_bytes(&mut db);
 
                         let mut servers: Vec<RaidPirServer<u8>> = (0..2)
-                            .map(|i| RaidPirServer::new(db.clone(), i, 2, 2))
+                            .map(|i| RaidPirServer::new(db.clone(), i, 2, 2, true))
                             .collect();
 
                         let client = RaidPirClient::new(db.len(), 2, 2);
@@ -100,7 +100,7 @@ fn bench_preprocess(c: &mut Criterion) {
         .sample_size(10)
         .plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
 
-    for exp in [14, 16, 18, 20, 22].iter() {
+    for exp in [20].iter() {
         let size = 1usize << exp;
 
         for threads in [1, 2, 4].iter() {
@@ -122,7 +122,7 @@ fn bench_preprocess(c: &mut Criterion) {
                             (0..iters)
                                 .map(|_| {
                                     let server: RaidPirServer<u8> =
-                                        RaidPirServer::new(db.clone(), 0, 2, 2);
+                                        RaidPirServer::new(db.clone(), 0, 2, 2, true);
 
                                     let start = std::time::Instant::now();
                                     black_box(server.preprocess());
@@ -141,7 +141,7 @@ fn bench_xoring(c: &mut Criterion) {
     let mut group = c.benchmark_group("XOR");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
 
-    for exp in [14, 16, 18, 20, 22].iter() {
+    for exp in [20].iter() {
         let size = 1usize << exp;
 
         for threads in [1, 2, 4].iter() {
@@ -169,6 +169,6 @@ fn bench_xoring(c: &mut Criterion) {
     }
 }
 
-//criterion_group!(benches, bench_query, bench_response, bench_xoring);
-criterion_group!(benches, bench_preprocess);
+criterion_group!(benches, bench_query, bench_response, bench_xoring);
+//criterion_group!(benches, bench_preprocess);
 criterion_main!(benches);
