@@ -1,5 +1,7 @@
 //! Utility functions
 
+use std::convert::TryInto;
+
 use bitvec::prelude::*;
 use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaChaRng;
@@ -13,16 +15,17 @@ use rayon::prelude::*;
  * ```
  * use bitvec::prelude::*;
  *
- * let seed: u64 = 1234;
+ * let seed: u128 = 1234;
  * let rbv = raidpir::util::rand_bitvec(seed, 5);
  *
  * assert_eq!(rbv.elements(), 1);
- * assert_eq!(rbv, bitvec![Lsb0, usize; 0, 1, 0, 0, 1]);
+ * assert_eq!(rbv, bitvec![Lsb0, usize; 1, 1, 0, 1, 1]);
  * ```
  */
-pub fn rand_bitvec(seed: u64, len: usize) -> BitVec<Lsb0, u8> {
+pub fn rand_bitvec(seed: u128, len: usize) -> BitVec<Lsb0, u8> {
     // Using ChaCha20, to be reproducible on different architectures.
-    let mut prng = ChaChaRng::seed_from_u64(seed);
+    let seed_bytes: [u8; 32] = [seed.to_le_bytes(), [0; 16]].concat().try_into().unwrap();
+    let mut prng = ChaChaRng::from_seed(seed_bytes);
 
     let mut vec = vec![0; len];
     prng.fill_bytes(&mut vec);

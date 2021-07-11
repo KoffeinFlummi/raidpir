@@ -63,7 +63,7 @@ impl RaidPirClient {
      * assert_eq!(queries[0].len(), 8);
      * ```
      */
-    pub fn query(&self, index: usize, seeds: &Vec<u64>) -> Vec<BitVec::<Lsb0,u8>> {
+    pub fn query(&self, index: usize, seeds: &Vec<u128>) -> Vec<BitVec::<Lsb0,u8>> {
         assert!(index < self.blocks);
         assert!(seeds.len() == self.servers);
 

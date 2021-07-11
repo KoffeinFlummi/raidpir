@@ -29,8 +29,8 @@ pub struct RaidPirServer<T> {
     russians: Option<Vec<Vec<T>>>,
     servers: usize,
     redundancy: usize,
-    queue: RwLock<HashMap<u64, T>>,
-    queue_used: RwLock<HashMap<u64, T>>,
+    queue: RwLock<HashMap<u128, T>>,
+    queue_used: RwLock<HashMap<u128, T>>,
 }
 
 impl<T: Clone + Default + BitXor<Output=T> + BitXorAssign> RaidPirServer<T> {
@@ -83,7 +83,7 @@ impl<T: Clone + Default + BitXor<Output=T> + BitXorAssign> RaidPirServer<T> {
         let mut rng = StdRng::from_entropy();
 
         loop {
-            let seed = rng.next_u64();
+            let seed = ((rng.next_u64() as u128) << 64) | (rng.next_u64() as u128);
             let random_bits = rand_bitvec(seed, blocks_per_server * (self.redundancy - 1));
 
             let mut db_iter = self.db.iter();
@@ -109,13 +109,14 @@ impl<T: Clone + Default + BitXor<Output=T> + BitXorAssign> RaidPirServer<T> {
     /**
      * Return a seed from the queue.
      */
-    pub fn seed(&self) -> u64 {
+    pub fn seed(&self) -> u128 {
         let len = {
             let queue = self.queue.read().unwrap();
             queue.len()
         };
 
         if len == 0 {
+            log::debug!("Refreshing queue!!");
             self.preprocess();
         }
 
@@ -132,7 +133,7 @@ impl<T: Clone + Default + BitXor<Output=T> + BitXorAssign> RaidPirServer<T> {
     /**
      * Calculate response to the given query with the given seed.
      */
-    pub fn response(&self, seed: u64, query: &BitVec<Lsb0, u8>) -> T {
+    pub fn response(&self, seed: u128, query: &BitVec<Lsb0, u8>) -> T {
         let mut answer = {
             let mut queue_used = self.queue_used.write().unwrap();
             queue_used.remove(&seed).unwrap()

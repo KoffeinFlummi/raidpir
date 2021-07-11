@@ -39,16 +39,16 @@ fn main() {
         let t1 = Instant::now();
 
         // Retrieve seed for each server
-        let seeds: Vec<u64> = streams
+        let seeds: Vec<u128> = streams
             .par_iter_mut()
             .map(|stream| {
-                let mut seed_bytes = [0; 8];
+                let mut seed_bytes = [0; 16];
                 stream.read_exact(&mut seed_bytes).unwrap();
 
-                u64::from_le_bytes(seed_bytes)
+                u128::from_le_bytes(seed_bytes)
             })
             .with_max_len(1)
-            .collect::<Vec<u64>>();
+            .collect::<Vec<u128>>();
 
         let t2 = Instant::now();
 
